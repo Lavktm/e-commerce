@@ -6,12 +6,20 @@ import * as z from "zod"
 import { Store } from "@prisma/client"
 import { Trash } from "lucide-react";
 import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { toast } from "react-hot-toast";
+import axios from "axios";
+import { AlertModal } from "@/components/modals/alert-modal";
+import { ApiAlert } from "@/components/ui/api-alert";
+import { useOrigion } from "@/hooks/use-origin";
+
+
 
 
 
@@ -29,8 +37,11 @@ type SettingsFormValues = z.infer<typeof formSchema>
 export const SettingsForm: React.FC<SettingsFormProps> = ({
     initialData
 }) => {
+    const params = useParams()
+    const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
+    const origin = useOrigion()
 
     const form = useForm<SettingsFormValues>({
         resolver: zodResolver(formSchema),
@@ -38,11 +49,40 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
     })
 
     const onSubmit = async (data: SettingsFormValues) => {
-        console.log(data)
+        try {
+            setLoading(true)
+            await axios.patch(`/api/stores/${params.storeId}`, data);
+            router.refresh() //Resynronize the updated data eg store name
+            toast.success("Store Updated.")
+        }
+        catch (err) {
+            toast.error("Something went wrong")
+        }
+        finally {
+            setLoading(false)
+        }
+    }
+
+    const onDelete = async () => {
+        try {
+            setLoading(true)
+            await axios.delete(`/api/stores/${params.storeId}`)
+            router.refresh()
+            router.push('/')
+            toast.success("Store Deleted")
+        }
+        catch (err) {
+            toast.error("Make sure you remove all products and categories first.")
+        }
+        finally {
+            setLoading(false)
+            setOpen(false)
+        }
     }
 
     return (
         <>
+            <AlertModal isOpen={open} onClose={() => setOpen(false)} onConfirm={onDelete} loading={loading} />
             <div className="flex items-center justify-between">
                 <Heading
                     title="Settings"
@@ -52,7 +92,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                     disabled={loading}
                     variant="destructive"
                     size="sm"
-                    onClick={() => { }}
+                    onClick={() => setOpen(true)}  //open state is going to control alert modal 
                 >
                     <Trash className="h-4 w-4" />
                 </Button>
@@ -76,7 +116,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                                             {...field}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+
                                 </FormItem>
                             )}
                         />
@@ -87,6 +127,12 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({
                 </form>
 
             </Form>
+            <Separator />
+            <ApiAlert
+                title="NEXT_PUBLIC_API_URL"
+                description={`${origin}/api/${params.storeId}`}
+                variant="public"
+            />
         </>
     )
 }
