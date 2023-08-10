@@ -18,6 +18,7 @@ import axios from "axios";
 import { AlertModal } from "@/components/modals/alert-modal";
 import { ApiAlert } from "@/components/ui/api-alert";
 import { useOrigion } from "@/hooks/use-origin";
+import ImageUpload from "@/components/ui/image-upload";
 
 
 
@@ -58,9 +59,15 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
     const onSubmit = async (data: BillboardFormValues) => {
         try {
             setLoading(true)
-            await axios.patch(`/api/stores/${params.storeId}`, data);
+            if (initialData) {
+                await axios.patch(`/api/${params.storeId}/billboards/${params.billboardId}`, data);
+            }
+            else {
+                await axios.post(`/api/${params.storeId}/billboards`, data)
+            }
             router.refresh() //Resynronize the updated data eg store name
-            toast.success("Store Updated.")
+            router.push(`/${params.storeId}/billboards`)
+            toast.success(toastMessage)
         }
         catch (err) {
             toast.error("Something went wrong")
@@ -73,13 +80,13 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
     const onDelete = async () => {
         try {
             setLoading(true)
-            await axios.delete(`/api/stores/${params.storeId}`)
+            await axios.delete(`/api/${params.storeId}/billboards/${params.billboardId}`)
             router.refresh()
             router.push('/')
-            toast.success("Store Deleted")
+            toast.success("Billboard Deleted")
         }
         catch (err) {
-            toast.error("Make sure you remove all products and categories first.")
+            toast.error("Make sure you remove all categories using this billboard first.")
         }
         finally {
             setLoading(false)
@@ -108,6 +115,26 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
             <Separator className="m-4" />
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 w-full">
+                    <FormField
+                        control={form.control}
+                        name="imageUrl"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>
+                                    Background image
+                                </FormLabel>
+                                <FormControl>
+                                    <ImageUpload
+                                        value={field.value ? [field.value] : []}
+                                        disabled={loading}
+                                        onChange={(url) => field.onChange(url)}
+                                        onRemove={() => field.onChange("")}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <div className="grid grid-cols-3 gap-8">
                         <FormField
                             control={form.control}
@@ -124,7 +151,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
                                             {...field}
                                         />
                                     </FormControl>
-
+                                    <FormMessage />
                                 </FormItem>
                             )}
                         />
@@ -136,7 +163,6 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
 
             </Form>
             <Separator className="m-4" />
-
         </>
     )
 }
