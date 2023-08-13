@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
 import axios from "axios";
 import { AlertModal } from "@/components/modals/alert-modal";
-import { ApiAlert } from "@/components/ui/api-alert";
 import { useOrigion } from "@/hooks/use-origin";
 import ImageUpload from "@/components/ui/image-upload";
 
@@ -44,7 +43,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
     const router = useRouter()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
-    const origin = useOrigion()
+
 
     const title = initialData ? "Edit billboard" : "Create billboard"
     const description = initialData ? "Edit a billboard" : "Add a new billboard"
@@ -82,7 +81,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
             setLoading(true)
             await axios.delete(`/api/${params.storeId}/billboards/${params.billboardId}`)
             router.refresh()
-            router.push('/')
+            router.push(`/${params.storeId}/billboards`)
             toast.success("Billboard Deleted")
         }
         catch (err) {
@@ -162,7 +161,7 @@ export const BillboardForm: React.FC<BillboardFormProps> = ({
                 </form>
 
             </Form>
-            <Separator className="m-4" />
+
         </>
     )
 }
