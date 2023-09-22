@@ -14,6 +14,9 @@ export async function GET(req: Request,
             where: {
                 id: params.categoryId,
             },
+            include: {
+                billboard: true
+            }
         })
         return NextResponse.json(category);
     }
